@@ -69,6 +69,12 @@ jobs:
             TAG="${{ github.event.client_payload.tag }}"
             CHANNEL="${{ github.event.client_payload.channel }}"
             MODE="single"
+          elif [ "${{ github.event_name }}" = "push" ]; then
+            # Push to main only updates static assets and the Hugo site.
+            # Packages are managed exclusively via repository_dispatch.
+            TAG=""
+            CHANNEL="all"
+            MODE="static-only"
           elif [ -n "${{ github.event.inputs.tag }}" ]; then
             TAG="${{ github.event.inputs.tag }}"
             CHANNEL="${{ github.event.inputs.channel }}"
@@ -84,6 +90,7 @@ jobs:
           echo "keep=${{ github.event.inputs.keep_versions || '0' }}" >> $GITHUB_OUTPUT
 
       - name: Download packages
+        if: steps.params.outputs.mode != 'static-only'
         env:
           GH_TOKEN: ${{ github.token }}
           TAG:      ${{ steps.params.outputs.tag }}
@@ -97,6 +104,7 @@ jobs:
           done
 
       - name: Prune old versions
+        if: steps.params.outputs.mode != 'static-only'
         env:
           GH_TOKEN:      ${{ github.token }}
           CHANNEL:       ${{ steps.params.outputs.channel }}
@@ -109,6 +117,7 @@ jobs:
           done
 
       - name: Place packages into pool
+        if: steps.params.outputs.mode != 'static-only'
         env:
           CHANNEL: ${{ steps.params.outputs.channel }}
         run: |
@@ -119,6 +128,7 @@ jobs:
           done
 
       - name: Sign RPM packages
+        if: steps.params.outputs.mode != 'static-only'
         env:
           CHANNEL: ${{ steps.params.outputs.channel }}
         run: |
@@ -129,6 +139,7 @@ jobs:
           done
 
       - name: Generate APT metadata
+        if: steps.params.outputs.mode != 'static-only'
         env:
           CHANNEL: ${{ steps.params.outputs.channel }}
         run: |
@@ -139,6 +150,7 @@ jobs:
           done
 
       - name: Generate RPM metadata
+        if: steps.params.outputs.mode != 'static-only'
         env:
           CHANNEL: ${{ steps.params.outputs.channel }}
         run: |
