@@ -32,7 +32,7 @@ sudo apt-get update && sudo apt-get install sitrep
 ## Quick Install — Fedora / RHEL / Rocky / AlmaLinux
 
 ```bash
-sudo dnf config-manager --add-repo https://packages.sitrep.ch/rpm/sitrep.repo
+sudo dnf config-manager addrepo --from-repofile=https://packages.sitrep.ch/rpm/sitrep.repo
 sudo dnf install sitrep
 ```
 
@@ -58,7 +58,7 @@ sudo apt-get update
 **Fedora / RHEL:**
 
 ```bash
-sudo dnf config-manager --add-repo https://packages.sitrep.ch/rpm/sitrep-testing.repo
+sudo dnf config-manager addrepo --from-repofile=https://packages.sitrep.ch/rpm/sitrep-testing.repo
 ```
 
 ---
