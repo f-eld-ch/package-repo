@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Places downloaded packages into the channel-specific pool directories.
-# Env: CHANNEL (stable|testing), DOWNLOAD_DIR (default: /tmp/new-packages)
+# Env: CHANNEL (stable|testing), DOWNLOAD_DIR (default: /tmp/new-packages/<channel>)
 set -euo pipefail
 
-DOWNLOAD_DIR="${DOWNLOAD_DIR:-/tmp/new-packages}"
+DOWNLOAD_DIR="${DOWNLOAD_DIR:-/tmp/new-packages/${CHANNEL}}"
 
 mkdir -p "deb/pool/${CHANNEL}/main/s/sitrep"
 mkdir -p "rpm/${CHANNEL}/x86_64"

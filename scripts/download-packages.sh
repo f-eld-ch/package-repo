@@ -5,7 +5,7 @@
 set -euo pipefail
 
 SITREP_REPO="${SITREP_REPO:-f-eld-ch/sitrep}"
-DOWNLOAD_DIR="${DOWNLOAD_DIR:-/tmp/new-packages}"
+DOWNLOAD_DIR="${DOWNLOAD_DIR:-/tmp/new-packages/${CHANNEL}}"
 mkdir -p "$DOWNLOAD_DIR"
 
 download_release() {
