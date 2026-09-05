@@ -1,6 +1,8 @@
 name: Update Package Repository
 
 on:
+  push:
+    branches: [main]
   repository_dispatch:
     types: [new-release]
   workflow_dispatch:
@@ -73,7 +75,7 @@ jobs:
             MODE="single"
           else
             TAG=""
-            CHANNEL="${{ github.event.inputs.channel || 'stable' }}"
+            CHANNEL="all"
             MODE="rebuild-all"
           fi
           echo "tag=${TAG}"         >> $GITHUB_OUTPUT
@@ -87,34 +89,64 @@ jobs:
           TAG:      ${{ steps.params.outputs.tag }}
           CHANNEL:  ${{ steps.params.outputs.channel }}
           MODE:     ${{ steps.params.outputs.mode }}
-        run: bash main-branch/scripts/download-packages.sh
+        run: |
+          CHANNELS="${CHANNEL}"
+          [ "${CHANNEL}" = "all" ] && CHANNELS="stable testing"
+          for CH in $CHANNELS; do
+            CHANNEL="$CH" bash main-branch/scripts/download-packages.sh
+          done
 
       - name: Prune old versions
         env:
           GH_TOKEN:      ${{ github.token }}
           CHANNEL:       ${{ steps.params.outputs.channel }}
           KEEP_VERSIONS: ${{ steps.params.outputs.keep }}
-        run: bash main-branch/scripts/prune-packages.sh
+        run: |
+          CHANNELS="${CHANNEL}"
+          [ "${CHANNEL}" = "all" ] && CHANNELS="stable testing"
+          for CH in $CHANNELS; do
+            CHANNEL="$CH" bash main-branch/scripts/prune-packages.sh
+          done
 
       - name: Place packages into pool
         env:
           CHANNEL: ${{ steps.params.outputs.channel }}
-        run: bash main-branch/scripts/place-packages.sh
+        run: |
+          CHANNELS="${CHANNEL}"
+          [ "${CHANNEL}" = "all" ] && CHANNELS="stable testing"
+          for CH in $CHANNELS; do
+            CHANNEL="$CH" bash main-branch/scripts/place-packages.sh
+          done
 
       - name: Sign RPM packages
         env:
           CHANNEL: ${{ steps.params.outputs.channel }}
-        run: bash main-branch/scripts/sign-rpms.sh
+        run: |
+          CHANNELS="${CHANNEL}"
+          [ "${CHANNEL}" = "all" ] && CHANNELS="stable testing"
+          for CH in $CHANNELS; do
+            CHANNEL="$CH" bash main-branch/scripts/sign-rpms.sh
+          done
 
       - name: Generate APT metadata
         env:
           CHANNEL: ${{ steps.params.outputs.channel }}
-        run: bash main-branch/scripts/build-apt.sh
+        run: |
+          CHANNELS="${CHANNEL}"
+          [ "${CHANNEL}" = "all" ] && CHANNELS="stable testing"
+          for CH in $CHANNELS; do
+            CHANNEL="$CH" bash main-branch/scripts/build-apt.sh
+          done
 
       - name: Generate RPM metadata
         env:
           CHANNEL: ${{ steps.params.outputs.channel }}
-        run: bash main-branch/scripts/build-rpm.sh
+        run: |
+          CHANNELS="${CHANNEL}"
+          [ "${CHANNEL}" = "all" ] && CHANNELS="stable testing"
+          for CH in $CHANNELS; do
+            CHANNEL="$CH" bash main-branch/scripts/build-rpm.sh
+          done
 
       - name: Build Hugo site
         run: hugo --source main-branch --destination /tmp/hugo-out
@@ -133,7 +165,12 @@ jobs:
           git add -A
           TAG="${{ steps.params.outputs.tag }}"
           CHANNEL="${{ steps.params.outputs.channel }}"
-          MSG="${TAG:+chore: add ${CHANNEL} packages for ${TAG}}"
-          MSG="${MSG:-chore: rebuild ${CHANNEL} packages}"
+          if [ -n "${TAG}" ]; then
+            MSG="chore: add ${CHANNEL} packages for ${TAG}"
+          elif [ "${CHANNEL}" = "all" ]; then
+            MSG="chore: rebuild all channels"
+          else
+            MSG="chore: rebuild ${CHANNEL} packages"
+          fi
           git diff --cached --quiet || git commit -m "$MSG"
           git push
