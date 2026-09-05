@@ -39,8 +39,8 @@ jobs:
       - name: Fetch main branch (scripts + static files)
         run: |
           git fetch origin main
-          mkdir -p main-branch
-          git archive origin/main | tar -x -C main-branch/
+          mkdir -p "${{ runner.temp }}/main-branch"
+          git archive origin/main | tar -x -C "${{ runner.temp }}/main-branch/"
 
       - name: Install tools
         run: |
@@ -93,7 +93,7 @@ jobs:
           CHANNELS="${CHANNEL}"
           [ "${CHANNEL}" = "all" ] && CHANNELS="stable testing"
           for CH in $CHANNELS; do
-            CHANNEL="$CH" bash main-branch/scripts/download-packages.sh
+            CHANNEL="$CH" bash "${{ runner.temp }}/main-branch/scripts/download-packages.sh"
           done
 
       - name: Prune old versions
@@ -105,7 +105,7 @@ jobs:
           CHANNELS="${CHANNEL}"
           [ "${CHANNEL}" = "all" ] && CHANNELS="stable testing"
           for CH in $CHANNELS; do
-            CHANNEL="$CH" bash main-branch/scripts/prune-packages.sh
+            CHANNEL="$CH" bash "${{ runner.temp }}/main-branch/scripts/prune-packages.sh"
           done
 
       - name: Place packages into pool
@@ -115,7 +115,7 @@ jobs:
           CHANNELS="${CHANNEL}"
           [ "${CHANNEL}" = "all" ] && CHANNELS="stable testing"
           for CH in $CHANNELS; do
-            CHANNEL="$CH" bash main-branch/scripts/place-packages.sh
+            CHANNEL="$CH" bash "${{ runner.temp }}/main-branch/scripts/place-packages.sh"
           done
 
       - name: Sign RPM packages
@@ -125,7 +125,7 @@ jobs:
           CHANNELS="${CHANNEL}"
           [ "${CHANNEL}" = "all" ] && CHANNELS="stable testing"
           for CH in $CHANNELS; do
-            CHANNEL="$CH" bash main-branch/scripts/sign-rpms.sh
+            CHANNEL="$CH" bash "${{ runner.temp }}/main-branch/scripts/sign-rpms.sh"
           done
 
       - name: Generate APT metadata
@@ -135,7 +135,7 @@ jobs:
           CHANNELS="${CHANNEL}"
           [ "${CHANNEL}" = "all" ] && CHANNELS="stable testing"
           for CH in $CHANNELS; do
-            CHANNEL="$CH" bash main-branch/scripts/build-apt.sh
+            CHANNEL="$CH" bash "${{ runner.temp }}/main-branch/scripts/build-apt.sh"
           done
 
       - name: Generate RPM metadata
@@ -145,18 +145,18 @@ jobs:
           CHANNELS="${CHANNEL}"
           [ "${CHANNEL}" = "all" ] && CHANNELS="stable testing"
           for CH in $CHANNELS; do
-            CHANNEL="$CH" bash main-branch/scripts/build-rpm.sh
+            CHANNEL="$CH" bash "${{ runner.temp }}/main-branch/scripts/build-rpm.sh"
           done
 
       - name: Build Hugo site
-        run: hugo --source main-branch --destination /tmp/hugo-out
+        run: hugo --source "${{ runner.temp }}/main-branch" --destination "${{ runner.temp }}/hugo-out"
 
       - name: Copy static files
         run: |
-          cp /tmp/hugo-out/index.html ./
-          cp main-branch/static-assets/sitrep-signing.asc ./
-          cp main-branch/static/sitrep.repo rpm/
-          cp main-branch/static/sitrep-testing.repo rpm/
+          cp "${{ runner.temp }}/hugo-out/index.html" ./
+          cp "${{ runner.temp }}/main-branch/static-assets/sitrep-signing.asc" ./
+          cp "${{ runner.temp }}/main-branch/static/sitrep.repo" rpm/
+          cp "${{ runner.temp }}/main-branch/static/sitrep-testing.repo" rpm/
 
       - name: Commit and push
         run: |
