@@ -85,12 +85,18 @@ incident management tool by <a href="https://f-eld.ch">f-eld.ch</a>.</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>curl -fsSL https://packages.sitrep.ch/sitrep-signing.asc <span style="color:#ae81ff">\
 </span></span></span><span style="display:flex;"><span>  | sudo gpg --dearmor -o /usr/share/keyrings/sitrep.gpg
 </span></span></code></pre></div><p>Add the repository and install:</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>echo <span style="color:#e6db74">&#34;deb [arch=amd64 signed-by=/usr/share/keyrings/sitrep.gpg] \
-</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  https://packages.sitrep.ch/deb stable main&#34;</span> <span style="color:#ae81ff">\
-</span></span></span><span style="display:flex;"><span>  | sudo tee /etc/apt/sources.list.d/sitrep.list
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>sudo tee /etc/apt/sources.list.d/sitrep.sources <span style="color:#e6db74">&lt;&lt;&#39;EOF&#39;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">Types: deb
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">URIs: https://packages.sitrep.ch/deb
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">Suites: stable
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">Components: main
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">Architectures: amd64
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">Signed-By: /usr/share/keyrings/sitrep.gpg
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">EOF</span>
 </span></span><span style="display:flex;"><span>sudo apt-get update <span style="color:#f92672">&amp;&amp;</span> sudo apt-get install sitrep
 </span></span></code></pre></div><blockquote>
-<p><strong>arm64:</strong> replace <code>arch=amd64</code> with <code>arch=arm64</code>.</p>
+<p><strong>arm64:</strong> replace <code>Architectures: amd64</code> with <code>Architectures: arm64</code>.
+<strong>Both architectures:</strong> use <code>Architectures: amd64 arm64</code>.</p>
 </blockquote>
 <hr>
 <h2 id="quick-install--fedora--rhel--rocky--almalinux">Quick Install — Fedora / RHEL / Rocky / AlmaLinux</h2>
@@ -106,9 +112,14 @@ source and run <code>sudo apt install sitrep=&lt;stable-version&gt;</code> (Debi
 <code>sudo dnf downgrade sitrep</code> (Fedora/RHEL).</p>
 </blockquote>
 <p><strong>Debian / Ubuntu:</strong></p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>echo <span style="color:#e6db74">&#34;deb [arch=amd64 signed-by=/usr/share/keyrings/sitrep.gpg] \
-</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  https://packages.sitrep.ch/deb testing main&#34;</span> <span style="color:#ae81ff">\
-</span></span></span><span style="display:flex;"><span>  | sudo tee /etc/apt/sources.list.d/sitrep-testing.list
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>sudo tee /etc/apt/sources.list.d/sitrep-testing.sources <span style="color:#e6db74">&lt;&lt;&#39;EOF&#39;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">Types: deb
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">URIs: https://packages.sitrep.ch/deb
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">Suites: testing
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">Components: main
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">Architectures: amd64
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">Signed-By: /usr/share/keyrings/sitrep.gpg
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">EOF</span>
 </span></span><span style="display:flex;"><span>sudo apt-get update
 </span></span></code></pre></div><p><strong>Fedora / RHEL:</strong></p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>sudo dnf config-manager addrepo --from-repofile<span style="color:#f92672">=</span>https://packages.sitrep.ch/rpm/sitrep-testing.repo
