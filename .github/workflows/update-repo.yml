@@ -148,6 +148,9 @@ jobs:
             CHANNEL="$CH" bash "${{ runner.temp }}/main-branch/scripts/build-rpm.sh"
           done
 
+      - name: Generate directory indexes
+        run: bash "${{ runner.temp }}/main-branch/scripts/generate-indexes.sh"
+
       - name: Build Hugo site
         run: hugo --source "${{ runner.temp }}/main-branch" --destination "${{ runner.temp }}/hugo-out"
 
