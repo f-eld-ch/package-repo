@@ -4,6 +4,15 @@
 # Prerequisite: GPG key imported and trusted before calling this script.
 set -euo pipefail
 
+# Skip regeneration if the deb pool files are unchanged — avoids
+# invalidating client caches on rebuild-all with identical packages.
+tracked_changed=$(git diff --name-only HEAD -- "deb/pool/${CHANNEL}/" 2>/dev/null || true)
+untracked=$(git ls-files --others --exclude-standard "deb/pool/${CHANNEL}/" 2>/dev/null | grep '\.deb$' || true)
+if [ -z "$tracked_changed" ] && [ -z "$untracked" ]; then
+  echo "APT pool unchanged for ${CHANNEL}, skipping metadata rebuild."
+  exit 0
+fi
+
 for arch in amd64 arm64; do
   mkdir -p "deb/dists/${CHANNEL}/main/binary-${arch}"
 

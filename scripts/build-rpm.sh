@@ -12,6 +12,15 @@ for arch in x86_64 aarch64; do
     continue
   fi
 
+  # Skip regeneration if the RPM files are unchanged — avoids invalidating
+  # client caches when a rebuild-all re-downloads the same packages.
+  tracked_changed=$(git diff --name-only HEAD -- "${dir}/"*.rpm 2>/dev/null || true)
+  untracked=$(git ls-files --others --exclude-standard "${dir}/" 2>/dev/null | grep '\.rpm$' || true)
+  if [ -z "$tracked_changed" ] && [ -z "$untracked" ]; then
+    echo "RPM pool unchanged for ${dir}, skipping metadata rebuild."
+    continue
+  fi
+
   createrepo_c --update "$dir/"
 
   gpg --batch --yes --armor --detach-sign \
