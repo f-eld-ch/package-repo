@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta name="generator" content="Hugo 0.165.0">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SitRep Package Repository</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --fg: #1a1a1a;
+      --muted: #6b7280;
+      --code-bg: #f3f4f6;
+      --code-border: #e5e7eb;
+      --link: #2563eb;
+      --hr: #e5e7eb;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0f0f0f;
+        --fg: #e5e5e5;
+        --muted: #9ca3af;
+        --code-bg: #1e1e1e;
+        --code-border: #374151;
+        --link: #60a5fa;
+        --hr: #374151;
+      }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      line-height: 1.6;
+      padding: 2rem 1rem;
+    }
+    main {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    h1 { font-size: 1.75rem; margin-bottom: 0.25rem; }
+    h2 { font-size: 1.2rem; margin: 2rem 0 0.75rem; }
+    p, li { margin-bottom: 0.5rem; }
+    ul { padding-left: 1.5rem; }
+    a { color: var(--link); }
+    hr { border: none; border-top: 1px solid var(--hr); margin: 2rem 0; }
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--code-border);
+      border-radius: 6px;
+      padding: 1rem;
+      overflow-x: auto;
+      margin: 0.75rem 0;
+    }
+    code {
+      font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+      font-size: 0.875rem;
+    }
+    p code, li code {
+      background: var(--code-bg);
+      border: 1px solid var(--code-border);
+      border-radius: 3px;
+      padding: 0.1em 0.3em;
+    }
+    blockquote {
+      border-left: 3px solid var(--code-border);
+      padding-left: 1rem;
+      color: var(--muted);
+      margin: 0.75rem 0;
+    }
+    footer {
+      margin-top: 3rem;
+      color: var(--muted);
+      font-size: 0.875rem;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <p>Official APT and RPM packages for <a href="https://github.com/f-eld-ch/sitrep">sitrep</a> — an open-source
+incident management tool by <a href="https://f-eld.ch">f-eld.ch</a>.</p>
+<hr>
+<h2 id="quick-install--debian--ubuntu">Quick Install — Debian / Ubuntu</h2>
+<p>Import the signing key:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>curl -fsSL https://packages.sitrep.ch/sitrep-signing.asc <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span>  | sudo gpg --dearmor -o /usr/share/keyrings/sitrep.gpg
+</span></span></code></pre></div><p>Add the repository and install:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>echo <span style="color:#e6db74">&#34;deb [arch=amd64 signed-by=/usr/share/keyrings/sitrep.gpg] \
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  https://packages.sitrep.ch/deb stable main&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span>  | sudo tee /etc/apt/sources.list.d/sitrep.list
+</span></span><span style="display:flex;"><span>sudo apt-get update <span style="color:#f92672">&amp;&amp;</span> sudo apt-get install sitrep
+</span></span></code></pre></div><blockquote>
+<p><strong>arm64:</strong> replace <code>arch=amd64</code> with <code>arch=arm64</code>.</p>
+</blockquote>
+<hr>
+<h2 id="quick-install--fedora--rhel--rocky--almalinux">Quick Install — Fedora / RHEL / Rocky / AlmaLinux</h2>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>sudo dnf config-manager --add-repo https://packages.sitrep.ch/rpm/sitrep.repo
+</span></span><span style="display:flex;"><span>sudo dnf install sitrep
+</span></span></code></pre></div><hr>
+<h2 id="testing--pre-release-channel">Testing / Pre-release Channel</h2>
+<blockquote>
+<p><strong>Warning:</strong> Testing packages are pre-releases and may be unstable.
+Add this alongside the stable repository — the package manager will select the highest
+available version. To revert to stable after installing a pre-release, remove the testing
+source and run <code>sudo apt install sitrep=&lt;stable-version&gt;</code> (Debian/Ubuntu) or
+<code>sudo dnf downgrade sitrep</code> (Fedora/RHEL).</p>
+</blockquote>
+<p><strong>Debian / Ubuntu:</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>echo <span style="color:#e6db74">&#34;deb [arch=amd64 signed-by=/usr/share/keyrings/sitrep.gpg] \
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  https://packages.sitrep.ch/deb testing main&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span>  | sudo tee /etc/apt/sources.list.d/sitrep-testing.list
+</span></span><span style="display:flex;"><span>sudo apt-get update
+</span></span></code></pre></div><p><strong>Fedora / RHEL:</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>sudo dnf config-manager --add-repo https://packages.sitrep.ch/rpm/sitrep-testing.repo
+</span></span></code></pre></div><hr>
+<h2 id="gpg-signing-key">GPG Signing Key</h2>
+<p>All packages and repository metadata are signed with a dedicated GPG key.</p>
+<p>Download: <a href="/sitrep-signing.asc">sitrep-signing.asc</a></p>
+<p>Fingerprint: <code>5082 9DB2 FE3D 96B9 F544  7FA2 3B5D 817E F801 41FA</code> (expires 2028-09-04)</p>
+<p>When the signing key rotates, download the updated key and re-run the <code>gpg --dearmor</code> import
+step. Systems running unattended updates should monitor key expiry.</p>
+<hr>
+<h2 id="all-releases">All Releases</h2>
+<p>See <a href="https://github.com/f-eld-ch/sitrep/releases">github.com/f-eld-ch/sitrep/releases</a> for
+release notes and changelog.</p>
+
+    <footer>
+      <hr>
+      <p><a href="https://f-eld.ch">f-eld.ch</a> &mdash; <a href="https://github.com/f-eld-ch/sitrep/blob/main/LICENSE">AGPL-3.0</a></p>
+    </footer>
+  </main>
+</body>
+</html>
