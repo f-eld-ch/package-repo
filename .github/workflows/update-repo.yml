@@ -36,11 +36,11 @@ jobs:
         with:
           ref: gh-pages
 
-      - name: Checkout main (scripts + static files)
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: main
-          path: main-branch
+      - name: Fetch main branch (scripts + static files)
+        run: |
+          git fetch origin main
+          mkdir -p main-branch
+          git archive origin/main | tar -x -C main-branch/
 
       - name: Install tools
         run: |
