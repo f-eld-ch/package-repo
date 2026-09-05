@@ -94,7 +94,7 @@ incident management tool by <a href="https://f-eld.ch">f-eld.ch</a>.</p>
 </blockquote>
 <hr>
 <h2 id="quick-install--fedora--rhel--rocky--almalinux">Quick Install — Fedora / RHEL / Rocky / AlmaLinux</h2>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>sudo dnf config-manager --add-repo https://packages.sitrep.ch/rpm/sitrep.repo
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>sudo dnf config-manager addrepo --from-repofile<span style="color:#f92672">=</span>https://packages.sitrep.ch/rpm/sitrep.repo
 </span></span><span style="display:flex;"><span>sudo dnf install sitrep
 </span></span></code></pre></div><hr>
 <h2 id="testing--pre-release-channel">Testing / Pre-release Channel</h2>
@@ -111,7 +111,7 @@ source and run <code>sudo apt install sitrep=&lt;stable-version&gt;</code> (Debi
 </span></span></span><span style="display:flex;"><span>  | sudo tee /etc/apt/sources.list.d/sitrep-testing.list
 </span></span><span style="display:flex;"><span>sudo apt-get update
 </span></span></code></pre></div><p><strong>Fedora / RHEL:</strong></p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>sudo dnf config-manager --add-repo https://packages.sitrep.ch/rpm/sitrep-testing.repo
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>sudo dnf config-manager addrepo --from-repofile<span style="color:#f92672">=</span>https://packages.sitrep.ch/rpm/sitrep-testing.repo
 </span></span></code></pre></div><hr>
 <h2 id="gpg-signing-key">GPG Signing Key</h2>
 <p>All packages and repository metadata are signed with a dedicated GPG key.</p>
