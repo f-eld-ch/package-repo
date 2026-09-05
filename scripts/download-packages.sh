@@ -25,16 +25,14 @@ if [ "${MODE:-single}" = "rebuild-all" ]; then
 
   # Determine which releases belong to this channel
   if [ "${CHANNEL}" = "testing" ]; then
-    PRERELEASE_FLAG="--exclude-drafts"
     FILTER='.[] | select(.isPrerelease) | .tagName'
   else
-    PRERELEASE_FLAG="--exclude-pre-releases"
-    FILTER='.[].tagName'
+    FILTER='.[] | select(.isPrerelease | not) | .tagName'
   fi
 
   gh release list \
     --repo "$SITREP_REPO" \
-    $PRERELEASE_FLAG \
+    --exclude-drafts \
     --limit 100 \
     --json tagName,isPrerelease \
     --jq "$FILTER" > /tmp/all-tags.txt
