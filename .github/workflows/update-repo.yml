@@ -160,6 +160,8 @@ jobs:
           cp "${{ runner.temp }}/main-branch/static-assets/sitrep-signing.asc" ./
           cp "${{ runner.temp }}/main-branch/static/sitrep.repo" rpm/
           cp "${{ runner.temp }}/main-branch/static/sitrep-testing.repo" rpm/
+          cp "${{ runner.temp }}/main-branch/static/sitrep.sources" deb/
+          cp "${{ runner.temp }}/main-branch/static/sitrep-testing.sources" deb/
 
       - name: Commit and push
         run: |

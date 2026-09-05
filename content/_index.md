@@ -19,19 +19,12 @@ curl -fsSL https://packages.sitrep.ch/sitrep-signing.asc \
 Add the repository and install:
 
 ```bash
-sudo tee /etc/apt/sources.list.d/sitrep.sources <<'EOF'
-Types: deb
-URIs: https://packages.sitrep.ch/deb
-Suites: stable
-Components: main
-Architectures: amd64
-Signed-By: /usr/share/keyrings/sitrep.gpg
-EOF
+sudo curl -fsSL https://packages.sitrep.ch/deb/sitrep.sources \
+  -o /etc/apt/sources.list.d/sitrep.sources
 sudo apt-get update && sudo apt-get install sitrep
 ```
 
-> **arm64:** replace `Architectures: amd64` with `Architectures: arm64`.
-> **Both architectures:** use `Architectures: amd64 arm64`.
+The hosted sources file covers both `amd64` and `arm64`.
 
 ---
 
@@ -55,14 +48,8 @@ sudo dnf install sitrep
 **Debian / Ubuntu:**
 
 ```bash
-sudo tee /etc/apt/sources.list.d/sitrep-testing.sources <<'EOF'
-Types: deb
-URIs: https://packages.sitrep.ch/deb
-Suites: testing
-Components: main
-Architectures: amd64
-Signed-By: /usr/share/keyrings/sitrep.gpg
-EOF
+sudo curl -fsSL https://packages.sitrep.ch/deb/sitrep-testing.sources \
+  -o /etc/apt/sources.list.d/sitrep-testing.sources
 sudo apt-get update
 ```
 
