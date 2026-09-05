@@ -1,0 +1,139 @@
+name: Update Package Repository
+
+on:
+  repository_dispatch:
+    types: [new-release]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to add (e.g. v1.2.3). Leave empty to rebuild entire channel.'
+        required: false
+        default: ''
+      channel:
+        description: 'Channel to publish to.'
+        required: false
+        default: 'stable'
+        type: choice
+        options:
+          - stable
+          - testing
+      keep_versions:
+        description: 'Number of releases to keep (0 = keep all).'
+        required: false
+        default: '0'
+
+jobs:
+  update-repo:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout gh-pages
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: gh-pages
+
+      - name: Checkout main (scripts + static files)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          path: main-branch
+
+      - name: Install tools
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y --no-install-recommends \
+            dpkg-dev apt-utils createrepo-c rpm gpg
+
+      - name: Install Hugo
+        uses: peaceiris/actions-hugo@f2acb7c5f695a87535fa8eb9040475c84c4f6909 # v3.2.1
+        with:
+          hugo-version: 'latest'
+
+      - name: Import signing key
+        env:
+          REPO_SIGNING_KEY: ${{ secrets.REPO_SIGNING_KEY }}
+        run: |
+          echo "$REPO_SIGNING_KEY" | gpg --batch --import
+          KEY_FP=$(gpg --list-keys --with-colons packages@sitrep.ch \
+            | awk -F: '/^fpr/{print $10; exit}')
+          echo "${KEY_FP}:6:" | gpg --import-ownertrust
+
+      - name: Resolve parameters
+        id: params
+        run: |
+          if [ "${{ github.event_name }}" = "repository_dispatch" ]; then
+            TAG="${{ github.event.client_payload.tag }}"
+            CHANNEL="${{ github.event.client_payload.channel }}"
+            MODE="single"
+          elif [ -n "${{ github.event.inputs.tag }}" ]; then
+            TAG="${{ github.event.inputs.tag }}"
+            CHANNEL="${{ github.event.inputs.channel }}"
+            MODE="single"
+          else
+            TAG=""
+            CHANNEL="${{ github.event.inputs.channel || 'stable' }}"
+            MODE="rebuild-all"
+          fi
+          echo "tag=${TAG}"         >> $GITHUB_OUTPUT
+          echo "channel=${CHANNEL}" >> $GITHUB_OUTPUT
+          echo "mode=${MODE}"       >> $GITHUB_OUTPUT
+          echo "keep=${{ github.event.inputs.keep_versions || '0' }}" >> $GITHUB_OUTPUT
+
+      - name: Download packages
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG:      ${{ steps.params.outputs.tag }}
+          CHANNEL:  ${{ steps.params.outputs.channel }}
+          MODE:     ${{ steps.params.outputs.mode }}
+        run: bash main-branch/scripts/download-packages.sh
+
+      - name: Prune old versions
+        env:
+          GH_TOKEN:      ${{ github.token }}
+          CHANNEL:       ${{ steps.params.outputs.channel }}
+          KEEP_VERSIONS: ${{ steps.params.outputs.keep }}
+        run: bash main-branch/scripts/prune-packages.sh
+
+      - name: Place packages into pool
+        env:
+          CHANNEL: ${{ steps.params.outputs.channel }}
+        run: bash main-branch/scripts/place-packages.sh
+
+      - name: Sign RPM packages
+        env:
+          CHANNEL: ${{ steps.params.outputs.channel }}
+        run: bash main-branch/scripts/sign-rpms.sh
+
+      - name: Generate APT metadata
+        env:
+          CHANNEL: ${{ steps.params.outputs.channel }}
+        run: bash main-branch/scripts/build-apt.sh
+
+      - name: Generate RPM metadata
+        env:
+          CHANNEL: ${{ steps.params.outputs.channel }}
+        run: bash main-branch/scripts/build-rpm.sh
+
+      - name: Build Hugo site
+        run: hugo --source main-branch --destination /tmp/hugo-out
+
+      - name: Copy static files
+        run: |
+          cp /tmp/hugo-out/index.html ./
+          cp main-branch/static-assets/sitrep-signing.asc ./
+          cp main-branch/static/sitrep.repo rpm/
+          cp main-branch/static/sitrep-testing.repo rpm/
+
+      - name: Commit and push
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          TAG="${{ steps.params.outputs.tag }}"
+          CHANNEL="${{ steps.params.outputs.channel }}"
+          MSG="${TAG:+chore: add ${CHANNEL} packages for ${TAG}}"
+          MSG="${MSG:-chore: rebuild ${CHANNEL} packages}"
+          git diff --cached --quiet || git commit -m "$MSG"
+          git push

@@ -1,0 +1,7 @@
+[sitrep-testing]
+name=SitRep Package Repository (Testing)
+baseurl=https://packages.sitrep.ch/rpm/testing/$basearch
+enabled=1
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=https://packages.sitrep.ch/sitrep-signing.asc

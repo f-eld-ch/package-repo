@@ -1,0 +1,3 @@
+baseURL = "https://packages.sitrep.ch"
+languageCode = "en-us"
+title = "SitRep Package Repository"
