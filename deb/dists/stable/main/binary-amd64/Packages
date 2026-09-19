@@ -1,14 +1,14 @@
 Package: sitrep
-Version: 26.9.6
+Version: 26.9.7
 Architecture: amd64
 Maintainer: Verein F-ELD <info@f-eld.ch>
 Installed-Size: 72150
 Depends: systemd
-Filename: pool/stable/main/s/sitrep/sitrep_26.9.6_linux_amd64.deb
-Size: 30140772
-MD5sum: ab24d2516403b7263386b1b81ccf502d
-SHA1: c1f46884d390d75c508447d28e00940e9ec40dca
-SHA256: c345cabcc93e1d1b1aa607e3a9d064cd0c018522cffd5d3fa78fa3ead8d50ba7
+Filename: pool/stable/main/s/sitrep/sitrep_26.9.7_linux_amd64.deb
+Size: 30140906
+MD5sum: 52defb7ff77ae13cad94dbff0614ed20
+SHA1: 9da4294704d8072485446a26127550ea87aff95f
+SHA256: 82f7a1d3cea900352cfd8da62dc11f96ff30362c1e2d54a61d0d2bd8036509a9
 Priority: optional
 Homepage: https://github.com/f-eld-ch/sitrep
 Description: SitRep: Digitale Lagebewirtschaftung für Führungsstäbe.
