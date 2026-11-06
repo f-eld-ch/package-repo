@@ -59,6 +59,25 @@ jobs:
       - name: Create site directory
         run: mkdir site
 
+      # Release assets never change once published, so cache them per tag.
+      # The key changes only when the set of kept releases changes.
+      - name: Compute release cache key
+        id: releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          HASH=$(gh release list --repo f-eld-ch/sitrep --exclude-drafts --limit 100 \
+            --json tagName,isPrerelease --jq '.[] | "\(.tagName) \(.isPrerelease)"' \
+            | { cat; echo "keep=${KEEP_VERSIONS}"; } | sha256sum | cut -c1-16)
+          echo "key=releases-${HASH}" >> "$GITHUB_OUTPUT"
+
+      - name: Restore release cache
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: /tmp/release-cache
+          key: ${{ steps.releases.outputs.key }}
+          restore-keys: releases-
+
       - name: Download packages
         working-directory: site
         env:

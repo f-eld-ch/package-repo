@@ -4,15 +4,12 @@
 # Prerequisite: GPG key imported and trusted before calling this script.
 set -euo pipefail
 
+# Use rpm's built-in gpg signing command (its definition differs between rpm
+# versions, so don't override it); only select the key. The key has no
+# passphrase and gpg runs non-interactively.
 cat > ~/.rpmmacros <<'MACROS'
 %_gpg_name SitRep Package Repository
-%_signature gpg
-%__gpg /usr/bin/gpg
-%__gpg_sign_cmd %{__gpg} --batch --no-verbose --no-armor \
-  -u "%{_gpg_name}" \
-  -sbo %{__signature_filename} \
-  --digest-algo sha256 \
-  %{__plaintext_filename}
+%_gpg_sign_cmd_extra_args --batch
 MACROS
 
 RPMS=$(find "rpm/${CHANNEL}/x86_64" "rpm/${CHANNEL}/aarch64" -name '*.rpm' 2>/dev/null)
