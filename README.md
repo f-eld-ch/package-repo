@@ -15,28 +15,22 @@ pre-releases alongside stable packages.
 
 ## How it works
 
-1. `f-eld-ch/sitrep` fires a `repository_dispatch` event on each release, carrying the tag name
-   and channel (`stable` or `testing`).
-2. The `update-repo.yml` workflow downloads the `.deb` and `.rpm` artifacts from that release,
-   signs the RPMs, regenerates APT and RPM metadata, and pushes the result to the `gh-pages`
-   branch.
-3. GitHub Pages serves the `gh-pages` branch at `packages.sitrep.ch`.
+1. `f-eld-ch/sitrep` fires a `repository_dispatch` event on each release.
+2. The `update-repo.yml` workflow rebuilds the **whole** site from the sitrep GitHub releases:
+   it downloads the newest `.deb`/`.rpm` artifacts per channel, signs the RPMs, regenerates and
+   signs the APT and RPM metadata, builds the Hugo landing page, and deploys the result with
+   GitHub Pages (`actions/deploy-pages`).
+3. Nothing is committed to a `gh-pages` branch, so package binaries never enter git history.
+   Pages must be set to Settings → Pages → Source: **GitHub Actions**.
+
+A Pages site is limited to 1 GB, so only the newest `keep_versions` releases per channel
+(default 5) are published; the workflow fails if the site exceeds 950 MB.
 
 ## Manual operations
 
-Trigger a rebuild via `gh`:
-
 ```bash
-# Add a single release to the stable channel
-gh workflow run update-repo.yml \
-  --repo f-eld-ch/package-repo \
-  -f tag=v1.2.3 \
-  -f channel=stable
-
-# Rebuild all stable packages from scratch
-gh workflow run update-repo.yml \
-  --repo f-eld-ch/package-repo \
-  -f channel=stable
+# Rebuild and redeploy, keeping the newest 3 releases per channel
+gh workflow run update-repo.yml --repo f-eld-ch/package-repo -f keep_versions=3
 
 # Watch progress
 gh run watch --repo f-eld-ch/package-repo

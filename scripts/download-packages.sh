@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Downloads .deb and .rpm artifacts from f-eld-ch/sitrep GitHub releases.
-# Env: TAG (single release tag), MODE (single|rebuild-all), CHANNEL (stable|testing),
+# Env: CHANNEL (stable|testing), KEEP_VERSIONS (newest N releases, 0 = all),
 #      GH_TOKEN, SITREP_REPO (default: f-eld-ch/sitrep)
 set -euo pipefail
 
@@ -19,27 +19,27 @@ download_release() {
     --clobber
 }
 
-if [ "${MODE:-single}" = "rebuild-all" ]; then
-  # Clear the channel pool so we rebuild from scratch
-  rm -rf "deb/pool/${CHANNEL}" "rpm/${CHANNEL}"
+KEEP_VERSIONS="${KEEP_VERSIONS:-0}"
 
-  # Determine which releases belong to this channel
-  if [ "${CHANNEL}" = "testing" ]; then
-    FILTER='.[] | select(.isPrerelease) | .tagName'
-  else
-    FILTER='.[] | select(.isPrerelease | not) | .tagName'
-  fi
-
-  gh release list \
-    --repo "$SITREP_REPO" \
-    --exclude-drafts \
-    --limit 100 \
-    --json tagName,isPrerelease \
-    --jq "$FILTER" > /tmp/all-tags.txt
-
-  while read -r t; do
-    download_release "$t" || echo "Warning: failed to download ${t}, skipping."
-  done < /tmp/all-tags.txt
+# Determine which releases belong to this channel (newest first)
+if [ "${CHANNEL}" = "testing" ]; then
+  FILTER='.[] | select(.isPrerelease) | .tagName'
 else
-  download_release "$TAG"
+  FILTER='.[] | select(.isPrerelease | not) | .tagName'
 fi
+
+gh release list \
+  --repo "$SITREP_REPO" \
+  --exclude-drafts \
+  --limit 100 \
+  --json tagName,isPrerelease \
+  --jq "$FILTER" > "/tmp/all-tags-${CHANNEL}.txt"
+
+if [ "${KEEP_VERSIONS}" != "0" ]; then
+  head -n "${KEEP_VERSIONS}" "/tmp/all-tags-${CHANNEL}.txt" > "/tmp/keep-tags-${CHANNEL}.txt"
+  mv "/tmp/keep-tags-${CHANNEL}.txt" "/tmp/all-tags-${CHANNEL}.txt"
+fi
+
+while read -r t; do
+  download_release "$t" || echo "Warning: failed to download ${t}, skipping."
+done < "/tmp/all-tags-${CHANNEL}.txt"

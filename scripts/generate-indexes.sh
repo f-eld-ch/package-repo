@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Generates index.html directory listing pages for all subdirectories
 # that do not already have one. Skips the repo root (Hugo handles that).
-# Run from the gh-pages working tree root.
+# Run from the site root.
 set -euo pipefail
 
 generate_index() {
