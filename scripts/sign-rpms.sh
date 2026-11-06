@@ -8,7 +8,7 @@ cat > ~/.rpmmacros <<'MACROS'
 %_gpg_name SitRep Package Repository
 %_signature gpg
 %__gpg /usr/bin/gpg
-%__gpg_sign_cmd %{__gpg} gpg --batch --no-verbose --no-armor \
+%__gpg_sign_cmd %{__gpg} --batch --no-verbose --no-armor \
   -u "%{_gpg_name}" \
   -sbo %{__signature_filename} \
   --digest-algo sha256 \
