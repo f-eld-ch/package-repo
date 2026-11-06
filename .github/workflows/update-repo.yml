@@ -1,5 +1,9 @@
 name: Update Package Repository
 
+# The whole site is rebuilt from the sitrep GitHub releases on every run and
+# deployed with GitHub Pages (Settings → Pages → Source: "GitHub Actions").
+# Nothing is committed to a gh-pages branch, so binaries never enter git history.
+
 on:
   push:
     branches: [main]
@@ -7,40 +11,30 @@ on:
     types: [new-release]
   workflow_dispatch:
     inputs:
-      tag:
-        description: 'Release tag to add (e.g. v1.2.3). Leave empty to rebuild entire channel.'
-        required: false
-        default: ''
-      channel:
-        description: 'Channel to publish to.'
-        required: false
-        default: 'stable'
-        type: choice
-        options:
-          - stable
-          - testing
       keep_versions:
-        description: 'Number of releases to keep (0 = keep all).'
+        description: 'Number of releases to keep per channel (0 = keep all).'
         required: false
-        default: '0'
+        default: '5'
+
+# One deployment at a time; never cancel a deploy midway.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+env:
+  # A Pages site may not exceed 1 GB; fail early with a clear message.
+  MAX_SITE_MB: '950'
 
 jobs:
-  update-repo:
+  build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
-
+      contents: read
+    env:
+      KEEP_VERSIONS: ${{ github.event.inputs.keep_versions || '5' }}
     steps:
-      - name: Checkout gh-pages
+      - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: gh-pages
-
-      - name: Fetch main branch (scripts + static files)
-        run: |
-          git fetch origin main
-          mkdir -p "${{ runner.temp }}/main-branch"
-          git archive origin/main | tar -x -C "${{ runner.temp }}/main-branch/"
 
       - name: Install tools
         run: |
@@ -62,132 +56,87 @@ jobs:
             | awk -F: '/^fpr/{print $10; exit}')
           echo "${KEY_FP}:6:" | gpg --import-ownertrust
 
-      - name: Resolve parameters
-        id: params
-        run: |
-          if [ "${{ github.event_name }}" = "repository_dispatch" ]; then
-            TAG="${{ github.event.client_payload.tag }}"
-            CHANNEL="${{ github.event.client_payload.channel }}"
-            MODE="single"
-          elif [ "${{ github.event_name }}" = "push" ]; then
-            # Push to main only updates static assets and the Hugo site.
-            # Packages are managed exclusively via repository_dispatch.
-            TAG=""
-            CHANNEL="all"
-            MODE="static-only"
-          elif [ -n "${{ github.event.inputs.tag }}" ]; then
-            TAG="${{ github.event.inputs.tag }}"
-            CHANNEL="${{ github.event.inputs.channel }}"
-            MODE="single"
-          else
-            TAG=""
-            CHANNEL="all"
-            MODE="rebuild-all"
-          fi
-          echo "tag=${TAG}"         >> $GITHUB_OUTPUT
-          echo "channel=${CHANNEL}" >> $GITHUB_OUTPUT
-          echo "mode=${MODE}"       >> $GITHUB_OUTPUT
-          echo "keep=${{ github.event.inputs.keep_versions || '0' }}" >> $GITHUB_OUTPUT
+      - name: Create site directory
+        run: mkdir site
 
       - name: Download packages
-        if: steps.params.outputs.mode != 'static-only'
+        working-directory: site
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG:      ${{ steps.params.outputs.tag }}
-          CHANNEL:  ${{ steps.params.outputs.channel }}
-          MODE:     ${{ steps.params.outputs.mode }}
         run: |
-          CHANNELS="${CHANNEL}"
-          [ "${CHANNEL}" = "all" ] && CHANNELS="stable testing"
-          for CH in $CHANNELS; do
-            CHANNEL="$CH" bash "${{ runner.temp }}/main-branch/scripts/download-packages.sh"
-          done
-
-      - name: Prune old versions
-        if: steps.params.outputs.mode != 'static-only'
-        env:
-          GH_TOKEN:      ${{ github.token }}
-          CHANNEL:       ${{ steps.params.outputs.channel }}
-          KEEP_VERSIONS: ${{ steps.params.outputs.keep }}
-        run: |
-          CHANNELS="${CHANNEL}"
-          [ "${CHANNEL}" = "all" ] && CHANNELS="stable testing"
-          for CH in $CHANNELS; do
-            CHANNEL="$CH" bash "${{ runner.temp }}/main-branch/scripts/prune-packages.sh"
+          for CH in stable testing; do
+            CHANNEL="$CH" bash "$GITHUB_WORKSPACE/scripts/download-packages.sh"
           done
 
       - name: Place packages into pool
-        if: steps.params.outputs.mode != 'static-only'
-        env:
-          CHANNEL: ${{ steps.params.outputs.channel }}
+        working-directory: site
         run: |
-          CHANNELS="${CHANNEL}"
-          [ "${CHANNEL}" = "all" ] && CHANNELS="stable testing"
-          for CH in $CHANNELS; do
-            CHANNEL="$CH" bash "${{ runner.temp }}/main-branch/scripts/place-packages.sh"
+          for CH in stable testing; do
+            CHANNEL="$CH" bash "$GITHUB_WORKSPACE/scripts/place-packages.sh"
           done
 
       - name: Sign RPM packages
-        if: steps.params.outputs.mode != 'static-only'
-        env:
-          CHANNEL: ${{ steps.params.outputs.channel }}
+        working-directory: site
         run: |
-          CHANNELS="${CHANNEL}"
-          [ "${CHANNEL}" = "all" ] && CHANNELS="stable testing"
-          for CH in $CHANNELS; do
-            CHANNEL="$CH" bash "${{ runner.temp }}/main-branch/scripts/sign-rpms.sh"
+          for CH in stable testing; do
+            CHANNEL="$CH" bash "$GITHUB_WORKSPACE/scripts/sign-rpms.sh"
           done
 
       - name: Generate APT metadata
-        if: steps.params.outputs.mode != 'static-only'
-        env:
-          CHANNEL: ${{ steps.params.outputs.channel }}
+        working-directory: site
         run: |
-          CHANNELS="${CHANNEL}"
-          [ "${CHANNEL}" = "all" ] && CHANNELS="stable testing"
-          for CH in $CHANNELS; do
-            CHANNEL="$CH" bash "${{ runner.temp }}/main-branch/scripts/build-apt.sh"
+          for CH in stable testing; do
+            CHANNEL="$CH" bash "$GITHUB_WORKSPACE/scripts/build-apt.sh"
           done
 
       - name: Generate RPM metadata
-        if: steps.params.outputs.mode != 'static-only'
-        env:
-          CHANNEL: ${{ steps.params.outputs.channel }}
+        working-directory: site
         run: |
-          CHANNELS="${CHANNEL}"
-          [ "${CHANNEL}" = "all" ] && CHANNELS="stable testing"
-          for CH in $CHANNELS; do
-            CHANNEL="$CH" bash "${{ runner.temp }}/main-branch/scripts/build-rpm.sh"
+          for CH in stable testing; do
+            CHANNEL="$CH" bash "$GITHUB_WORKSPACE/scripts/build-rpm.sh"
           done
 
       - name: Generate directory indexes
-        run: bash "${{ runner.temp }}/main-branch/scripts/generate-indexes.sh"
+        working-directory: site
+        run: bash "$GITHUB_WORKSPACE/scripts/generate-indexes.sh"
 
       - name: Build Hugo site
-        run: hugo --source "${{ runner.temp }}/main-branch" --destination "${{ runner.temp }}/hugo-out"
+        run: hugo --source "$GITHUB_WORKSPACE" --destination "$RUNNER_TEMP/hugo-out"
 
       - name: Copy static files
+        working-directory: site
         run: |
-          cp "${{ runner.temp }}/hugo-out/index.html" ./
-          cp "${{ runner.temp }}/main-branch/static-assets/sitrep-signing.asc" ./
-          cp "${{ runner.temp }}/main-branch/static/sitrep.repo" rpm/
-          cp "${{ runner.temp }}/main-branch/static/sitrep-testing.repo" rpm/
-          cp "${{ runner.temp }}/main-branch/static/sitrep.sources" deb/
-          cp "${{ runner.temp }}/main-branch/static/sitrep-testing.sources" deb/
+          cp "$RUNNER_TEMP/hugo-out/index.html" ./
+          cp "$GITHUB_WORKSPACE/static-assets/sitrep-signing.asc" ./
+          cp "$GITHUB_WORKSPACE/static/sitrep.repo" rpm/
+          cp "$GITHUB_WORKSPACE/static/sitrep-testing.repo" rpm/
+          cp "$GITHUB_WORKSPACE/static/sitrep.sources" deb/
+          cp "$GITHUB_WORKSPACE/static/sitrep-testing.sources" deb/
 
-      - name: Commit and push
+      - name: Check site size
         run: |
-          git config user.name  "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -A
-          TAG="${{ steps.params.outputs.tag }}"
-          CHANNEL="${{ steps.params.outputs.channel }}"
-          if [ -n "${TAG}" ]; then
-            MSG="chore: add ${CHANNEL} packages for ${TAG}"
-          elif [ "${CHANNEL}" = "all" ]; then
-            MSG="chore: rebuild all channels"
-          else
-            MSG="chore: rebuild ${CHANNEL} packages"
+          SIZE_MB=$(du -sm site | cut -f1)
+          echo "Site size: ${SIZE_MB} MB (limit ${MAX_SITE_MB} MB)"
+          if [ "$SIZE_MB" -gt "$MAX_SITE_MB" ]; then
+            echo "::error::Site is ${SIZE_MB} MB, over the GitHub Pages limit. Lower keep_versions."
+            exit 1
           fi
-          git diff --cached --quiet || git commit -m "$MSG"
-          git push
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4
